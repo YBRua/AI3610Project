@@ -13,6 +13,8 @@ def add_noise_to_weights(
         if hasattr(m, 'weight'):
             m.weight.add_(torch.randn(m.weight.size()) * 0.1)
     """
+    if std < 1e-5:
+        return
     gassian_kernel = torch.distributions.Normal(mean, std)
     with torch.no_grad():
         for name, param in model.named_parameters():
