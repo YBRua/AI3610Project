@@ -1,3 +1,4 @@
+import math
 import torch
 import numpy as np
 import torch.nn as nn
@@ -95,7 +96,9 @@ class ScheduledExpGaussianPerturbator(Perturbator):
         super().__init__(model, device)
         self.mean = mean
         self.eps = eps
-        self.schedule = torch.linspace(std_start, std_end, steps).tolist()
+        self.schedule = torch.log(
+            torch.linspace(math.exp(std_start), math.exp(std_end), steps)
+        ).tolist()
         self.current_step = 0
 
     def _exp_gaussian_like(self, x: torch.Tensor, std: float):

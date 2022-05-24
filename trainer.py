@@ -19,6 +19,34 @@ class Trainer:
     def __init__(self) -> None:
         pass
 
+    def proxy_train(
+            self,
+            e: int,
+            model: nn.Module,
+            optimizer: optim.Optimizer,
+            loss_fn: nn.Module,
+            train_loader: DataLoader,
+            device: torch.device,
+            perturbator: perturbators.Perturbator,
+            args):
+
+        model.train()
+        proxy = copy.deepcopy(model)
+        proxy.train()
+        progress = tqdm(train_loader)
+        tot_loss = 0
+        tot_acc = 0
+
+        for bid, (x, y) in enumerate(progress):
+            x, y = x.to(device), y.to(device)
+
+            proxy.load_state_dict(model.state_dict())
+            perturbator.perturb_model()
+
+            optimizer.zero_grad()
+            model_out = torch.softmax(model(x), dim=1)
+            proxy_out = torch.softmax(proxy(x), dim=1)
+
     def train(
             self,
             e: int,
