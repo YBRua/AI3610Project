@@ -102,8 +102,8 @@ def main(args):
             f'| Val Acc {val_acc:.4f} |')
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-        torch.save(model.state_dict(), MODEL_SAVE)
-        logger.info(f'| Model saved as {MODEL_SAVE} |')
+            torch.save(model.state_dict(), MODEL_SAVE)
+            logger.info(f'| Model saved as {MODEL_SAVE} |')
 
 
 if __name__ == "__main__":
