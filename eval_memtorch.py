@@ -10,6 +10,7 @@ from datetime import datetime
 import models
 import data_prep
 from trainer import Trainer
+from common import parse_args
 
 
 def setup_memtorch_logger(args):
@@ -72,3 +73,8 @@ def main(args):
         mloss, macc = trainer.validate_memtorch(
             model, loss_fn, test_loader, device)
         logger.info(f'| Memtorch | Loss {mloss:8.4f} | Acc {macc:5.4f} |')
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    main(args)
