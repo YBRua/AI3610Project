@@ -54,6 +54,7 @@ def main(args):
     NOISE_MEAN = args.mean
     NOISE_STD = args.std
     MODEL_SAVE = os.path.join('model_save', args.model_save)
+    PROXY_SAVE = os.path.join('model_save', args.proxy_save)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # data prep
@@ -65,36 +66,46 @@ def main(args):
 
     # initialization
     model = models.build_model(args.model)
+    proxy = models.build_model(args.model)
     model.to(device)
-    loss_fn = nn.NLLLoss()
+    proxy.to(device)
+    proxy.load_state_dict(torch.load(PROXY_SAVE))
+    model.load_state_dict(torch.load(PROXY_SAVE))
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
     trainer = Trainer()
 
     # perturbation
     if args.perturbator == 'exp':
-        proxy_perturbator = perturbators.ExpGaussianPerturbator(
-            None, device, NOISE_MEAN, NOISE_STD)
+        perturbator = perturbators.ExpGaussianPerturbator(
+            model, device, NOISE_MEAN, NOISE_STD)
     elif args.perturbator == 'df':
-        proxy_perturbator = perturbators.DeviceFaultPerturbator(
-            None, device, NOISE_MEAN, NOISE_STD)
+        perturbator = perturbators.DeviceFaultPerturbator(
+            model, device,
+            lrs_proportion=0.05 if args.scheduled_perturb else 0.1,
+            hrs_proportion=0.05 if args.scheduled_perturb else 0.1,
+            scheduled=args.scheduled_perturb)
     elif args.perturbator == 'scheduled':
-        proxy_perturbator = perturbators.ScheduledExpGaussianPerturbator(
-            None, device, NOISE_MEAN, std_end=NOISE_STD, steps=N_EPOCHS - 1)
+        perturbator = perturbators.ScheduledExpGaussianPerturbator(
+            model, device, NOISE_MEAN, std_end=NOISE_STD, steps=N_EPOCHS - 1)
     else:
-        proxy_perturbator = None
+        perturbator = None
 
     # train
     best_val_loss = float('inf')
     for e in range(N_EPOCHS):
         trainer.proxy_train(
-            e, model, optimizer, loss_fn,
+            e, model, proxy, optimizer,
+            nn.MSELoss(),
+            # nn.KLDivLoss(reduction='batchmean'),
             train_loader, device,
-            proxy_perturbator, args)
+            perturbator, args)
+
         val_loss, val_acc = trainer.validate(
             model, loss_fn, test_loader, device)
 
-        if proxy_perturbator is not None:
-            proxy_perturbator.step()
+        if perturbator is not None:
+            perturbator.step()
 
         logger.info(
             f'| Epoch {e} '
@@ -102,8 +113,8 @@ def main(args):
             f'| Val Acc {val_acc:.4f} |')
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-        torch.save(model.state_dict(), MODEL_SAVE)
-        logger.info(f'| Model saved as {MODEL_SAVE} |')
+            torch.save(model.state_dict(), MODEL_SAVE)
+            logger.info(f'| Model saved as {MODEL_SAVE} |')
 
 
 if __name__ == "__main__":

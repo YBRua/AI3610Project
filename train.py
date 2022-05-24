@@ -94,6 +94,7 @@ def main(args):
             e, model, optimizer, loss_fn,
             train_loader, device,
             perturbator, args)
+
         val_loss, val_acc = trainer.validate(
             model, loss_fn, test_loader, device)
 

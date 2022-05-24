@@ -12,7 +12,6 @@ from memtorch.map.Input import naive_scale
 from memtorch.map.Parameter import naive_map
 from memtorch.bh.nonideality.NonIdeality import apply_nonidealities
 
-import noise
 import perturbators
 
 
@@ -31,6 +30,7 @@ class Trainer:
             self,
             e: int,
             model: nn.Module,
+            proxy: nn.Module,
             optimizer: optim.Optimizer,
             loss_fn: nn.Module,
             train_loader: DataLoader,
@@ -39,36 +39,30 @@ class Trainer:
             args):
 
         model.train()
-        proxy = copy.deepcopy(model)
-        proxy.train()
-        perturbator.model = proxy
+        proxy.eval()
         progress = tqdm(train_loader)
         tot_loss = 0
         tot_acc = 0
 
-        weight_mixer = weight_mixer_factory(0.3, 1, args.epochs - 1)
-
         for bid, (x, y) in enumerate(progress):
             x, y = x.to(device), y.to(device)
 
-            proxy.load_state_dict(model.state_dict())
-            noise.add_noise_to_weights(proxy, device, args.mean, args.std)
+            if perturbator is not None:
+                perturbator.perturb_model()
 
             optimizer.zero_grad()
             model_out = torch.softmax(model(x), dim=-1)
             proxy_out = torch.softmax(proxy(x), dim=-1)
-            weight = weight_mixer(e)
-            assert weight <= 1.0 and weight >= 0
-            mixed_out = weight * model_out + (1 - weight) * proxy_out
+            pred = model_out.argmax(dim=1)
 
-            final_out = mixed_out.detach() + model_out - model_out.detach()
-            pred = final_out.argmax(dim=1)
-            loss = loss_fn(torch.log(final_out), y)
-
+            loss = loss_fn(model_out, proxy_out)
             loss.backward()
             optimizer.step()
             tot_loss += loss.item()
             tot_acc += (pred == y).float().mean().item()
+
+            if perturbator is not None:
+                perturbator.restore_perturbation()
 
             avg_loss = tot_loss / (bid + 1)
             avg_acc = tot_acc / (bid + 1)
@@ -188,8 +182,8 @@ class Trainer:
                 copy.deepcopy(patched_model),
                 non_idealities=[
                     memtorch.bh.nonideality.NonIdeality.DeviceFaults],
-                lrs_proportion=0.25,
-                hrs_proportion=0.10,
+                lrs_proportion=0.1,
+                hrs_proportion=0.1,
                 electroform_proportion=0)
         elif nonideality == 'none':
             patched_model_ = patched_model
