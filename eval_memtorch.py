@@ -70,7 +70,7 @@ def main(args):
     model.load_state_dict(torch.load(MODEL_SAVE))
     model.eval()
     mloss, macc = trainer.validate_memtorch(
-        model, loss_fn, test_loader, device)
+        model, loss_fn, test_loader, device, args.nonideality)
     logger.info(f'| Memtorch | Loss {mloss:8.4f} | Acc {macc:5.4f} |')
 
 

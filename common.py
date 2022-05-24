@@ -14,7 +14,7 @@ def parse_args():
         default='model.pt')
     parser.add_argument(
         '--model', '-m',
-        choices=['mlp', 'cnn'], default='mlp')
+        choices=['mlp', 'cnn', 'dmlp', 'qmlp'], default='mlp')
     parser.add_argument(
         '--perturbator', '-p',
         choices=['none', 'exp', 'df', 'scheduled'], default='none')
