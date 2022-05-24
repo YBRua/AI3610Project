@@ -124,6 +124,7 @@ class Trainer:
             device: torch.device,
             use_tqdm: bool = False):
         model.eval()
+        total_samples = 0
         with torch.no_grad():
             tot_loss = 0
             tot_acc = 0
@@ -140,9 +141,10 @@ class Trainer:
 
                 tot_loss += loss.item() * x.shape[0]
                 tot_acc += (pred == y).float().sum().item()
+                total_samples += x.shape[0]
 
-            avg_loss = tot_loss / len(test_loader.dataset)
-            avg_acc = tot_acc / len(test_loader.dataset)
+            avg_loss = tot_loss / total_samples
+            avg_acc = tot_acc / total_samples
 
         return avg_loss, avg_acc
 
