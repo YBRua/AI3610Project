@@ -102,28 +102,28 @@ def main(args):
             logger.info('=' * 84)
 
             # perturbed model info
-            largest_deviations = []
-            logger.info(
-                f'| {"Layer":<20} '
-                f'| {"Deviation":17} '
-                f'| {"Original":17} '
-                f'| {"Noisy":17} |')
-            logger.info('-' * 84)
-            for key in ori_param.keys():
-                largest_deviations.append(
-                    torch.max(
-                        torch.abs(ori_param[key] - noise_param[key])
-                    ).item())
-                ori_max = torch.max(ori_param[key]).item()
-                ori_min = torch.min(ori_param[key]).item()
-                noise_max = torch.max(noise_param[key]).item()
-                noise_min = torch.min(noise_param[key]).item()
-                logger.info(
-                    f'| {key:<20} '
-                    f'| {largest_deviations[-1]:17.2f} '
-                    f'| {ori_max:8.2f} {ori_min:8.2f} '
-                    f'| {noise_max:8.2f} {noise_min:8.2f} |')
-            logger.info('=' * 84)
+            # largest_deviations = []
+            # logger.info(
+            #     f'| {"Layer":<20} '
+            #     f'| {"Deviation":17} '
+            #     f'| {"Original":17} '
+            #     f'| {"Noisy":17} |')
+            # logger.info('-' * 84)
+            # for key in ori_param.keys():
+            #     largest_deviations.append(
+            #         torch.max(
+            #             torch.abs(ori_param[key] - noise_param[key])
+            #         ).item())
+            #     ori_max = torch.max(ori_param[key]).item()
+            #     ori_min = torch.min(ori_param[key]).item()
+            #     noise_max = torch.max(noise_param[key]).item()
+            #     noise_min = torch.min(noise_param[key]).item()
+            #     logger.info(
+            #         f'| {key:<20} '
+            #         f'| {largest_deviations[-1]:17.2f} '
+            #         f'| {ori_max:8.2f} {ori_min:8.2f} '
+            #         f'| {noise_max:8.2f} {noise_min:8.2f} |')
+            # logger.info('=' * 84)
 
     logger.info(f'Done {EVAL_RUNS} runs')
     logger.info(f'Average Accuracy: {np.mean(accs):.4f}')
