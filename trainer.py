@@ -23,21 +23,6 @@ def weight_mixer_factory(end_w: float, begin_w: float, steps: int):
     return weight_mixer
 
 
-class LinearScheduledSampler:
-    def __init__(self, linear_range, start_value, stop_value):
-        self.cnt = 0
-        self.range = linear_range
-        self.start = start_value
-        self.stop = stop_value
-
-    def get_prob(self):
-        dist_from_start = self.cnt % self.range
-        return self.stop + (self.range - dist_from_start) * (self.start - self.stop) / self.range
-
-    def update(self):
-        self.cnt += 1
-
-
 class Trainer:
     def __init__(self) -> None:
         pass

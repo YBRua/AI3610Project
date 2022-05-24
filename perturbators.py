@@ -30,10 +30,12 @@ class DeviceFaultPerturbator(Perturbator):
             model: nn.Module,
             device: torch.device,
             hrs_proportion: float = 0.1,
-            lrs_proportion: float = 0.1) -> None:
+            lrs_proportion: float = 0.1,
+            scheduled: bool = False) -> None:
         super().__init__(model, device)
         self.hrs_proportion = hrs_proportion / 2
         self.lrs_proportion = lrs_proportion / 2
+        self.scheduled = scheduled
 
     def _perturb_idx(self, x: torch.Tensor, proportion: float):
         idx = torch.zeros_like(x).view(-1)
@@ -44,6 +46,11 @@ class DeviceFaultPerturbator(Perturbator):
         )
         idx[chosen] = 1
         return idx.reshape(x.shape) == 1
+
+    def step(self):
+        if self.scheduled:
+            self.lrs_proportion += 0.005
+            self.hrs_proportion += 0.005
 
     def perturb_model(self):
         self.perturb_dict = {}

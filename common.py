@@ -17,7 +17,9 @@ def parse_args():
         choices=['mlp', 'cnn', 'dmlp', 'qmlp'], default='mlp')
     parser.add_argument(
         '--perturbator', '-p',
-        choices=['none', 'exp', 'df', 'scheduled'], default='none')
+        choices=['none', 'exp', 'df', 'sched_exp'], default='none')
+    parser.add_argument(
+        '--scheduled_perturb', '-sp', action='store_true')
     parser.add_argument(
         '--regularization', '-r', action='store_true')
     parser.add_argument(
