@@ -56,7 +56,7 @@ def main(args):
         test_set, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
 
     # initialization
-    model = models.MLP()
+    model = models.build_model(args.model)
     model.to(device)
     loss_fn = nn.CrossEntropyLoss()
     trainer = Trainer()

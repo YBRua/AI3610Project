@@ -13,9 +13,11 @@ def parse_args():
         '--model_save', '-s', type=str,
         default='model.pt')
     parser.add_argument(
+        '--model', '-m',
+        choices=['mlp', 'cnn'], default='mlp')
+    parser.add_argument(
         '--perturbator', '-p',
-        choices=['none', 'exp', 'df', 'scheduled'],
-        default='none')
+        choices=['none', 'exp', 'df', 'scheduled'], default='none')
     parser.add_argument(
         '--regularization', '-r', action='store_true')
     parser.add_argument(

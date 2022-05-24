@@ -12,7 +12,30 @@ from memtorch.map.Input import naive_scale
 from memtorch.map.Parameter import naive_map
 from memtorch.bh.nonideality.NonIdeality import apply_nonidealities
 
+import noise
 import perturbators
+
+
+def weight_mixer_factory(end_w: float, begin_w: float, steps: int):
+    def weight_mixer(epoch: int):
+        return end_w + (begin_w - end_w) * (steps - epoch) / steps
+
+    return weight_mixer
+
+
+class LinearScheduledSampler:
+    def __init__(self, linear_range, start_value, stop_value):
+        self.cnt = 0
+        self.range = linear_range
+        self.start = start_value
+        self.stop = stop_value
+
+    def get_prob(self):
+        dist_from_start = self.cnt % self.range
+        return self.stop + (self.range - dist_from_start) * (self.start - self.stop) / self.range
+
+    def update(self):
+        self.cnt += 1
 
 
 class Trainer:
@@ -33,19 +56,39 @@ class Trainer:
         model.train()
         proxy = copy.deepcopy(model)
         proxy.train()
+        perturbator.model = proxy
         progress = tqdm(train_loader)
         tot_loss = 0
         tot_acc = 0
+
+        weight_mixer = weight_mixer_factory(0.3, 1, args.epochs - 1)
 
         for bid, (x, y) in enumerate(progress):
             x, y = x.to(device), y.to(device)
 
             proxy.load_state_dict(model.state_dict())
-            perturbator.perturb_model()
+            noise.add_noise_to_weights(proxy, device, args.mean, args.std)
 
             optimizer.zero_grad()
-            model_out = torch.softmax(model(x), dim=1)
-            proxy_out = torch.softmax(proxy(x), dim=1)
+            model_out = torch.softmax(model(x), dim=-1)
+            proxy_out = torch.softmax(proxy(x), dim=-1)
+            weight = weight_mixer(e)
+            assert weight <= 1.0 and weight >= 0
+            mixed_out = weight * model_out + (1 - weight) * proxy_out
+
+            final_out = mixed_out.detach() + model_out - model_out.detach()
+            pred = final_out.argmax(dim=1)
+            loss = loss_fn(torch.log(final_out), y)
+
+            loss.backward()
+            optimizer.step()
+            tot_loss += loss.item()
+            tot_acc += (pred == y).float().mean().item()
+
+            avg_loss = tot_loss / (bid + 1)
+            avg_acc = tot_acc / (bid + 1)
+            progress.set_description(
+                f'| Epoch {e} | Loss {avg_loss:3.4f} | Acc {avg_acc:.4f}')
 
     def train(
             self,

@@ -16,7 +16,7 @@ from common import parse_args
 
 
 def setup_train_logger(args):
-    logger = logging.getLogger('MDNN Training')
+    logger = logging.getLogger('MDNN Proxied Training')
     logger.setLevel(logging.INFO)
 
     stream_handler = logging.StreamHandler()
@@ -26,7 +26,7 @@ def setup_train_logger(args):
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     model_name = os.path.splitext(args.model_save)[0]
     file_handler = logging.FileHandler(
-        filename=f'./logs/train-{model_name}-{args.seed}-{timestamp}.log',
+        filename=f'./logs/proxy-{model_name}-{args.seed}-{timestamp}.log',
         mode='a',
         encoding='utf-8')
     file_formatter = logging.Formatter(
@@ -66,35 +66,35 @@ def main(args):
     # initialization
     model = models.build_model(args.model)
     model.to(device)
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.NLLLoss()
     optimizer = optim.Adam(model.parameters())
     trainer = Trainer()
 
     # perturbation
     if args.perturbator == 'exp':
-        perturbator = perturbators.ExpGaussianPerturbator(
-            model, device, NOISE_MEAN, NOISE_STD)
+        proxy_perturbator = perturbators.ExpGaussianPerturbator(
+            None, device, NOISE_MEAN, NOISE_STD)
     elif args.perturbator == 'df':
-        perturbator = perturbators.DeviceFaultPerturbator(
-            model, device, NOISE_MEAN, NOISE_STD)
+        proxy_perturbator = perturbators.DeviceFaultPerturbator(
+            None, device, NOISE_MEAN, NOISE_STD)
     elif args.perturbator == 'scheduled':
-        perturbator = perturbators.ScheduledExpGaussianPerturbator(
-            model, device, NOISE_MEAN, std_end=NOISE_STD, steps=N_EPOCHS - 1)
+        proxy_perturbator = perturbators.ScheduledExpGaussianPerturbator(
+            None, device, NOISE_MEAN, std_end=NOISE_STD, steps=N_EPOCHS - 1)
     else:
-        perturbator = None
+        proxy_perturbator = None
 
     # train
     best_val_loss = float('inf')
     for e in range(N_EPOCHS):
-        trainer.train(
+        trainer.proxy_train(
             e, model, optimizer, loss_fn,
             train_loader, device,
-            perturbator, args)
+            proxy_perturbator, args)
         val_loss, val_acc = trainer.validate(
             model, loss_fn, test_loader, device)
 
-        if perturbator is not None:
-            perturbator.step()
+        if proxy_perturbator is not None:
+            proxy_perturbator.step()
 
         logger.info(
             f'| Epoch {e} '
