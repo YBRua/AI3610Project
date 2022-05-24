@@ -49,6 +49,7 @@ def main(args):
     logger.info(' '.join(sys.argv))
 
     # experiment setup
+    EVAL_RUNS = args.eval_runs
     BATCH_SIZE = args.batch_size
     NOISE_MEAN = args.mean
     NOISE_STD = args.std
@@ -67,52 +68,66 @@ def main(args):
 
     # evaluation
     logger.info(f'Loading model from {MODEL_SAVE}')
-    model.load_state_dict(torch.load(MODEL_SAVE))
-    model.eval()
-    with torch.no_grad():
-        # regular eval
-        test_loss, test_acc = trainer.validate(
-            model, loss_fn, test_loader, device)
-        logger.info('=' * 84)
-        logger.info(
-            f"| W/o noise | Loss {test_loss:8.4f} | Acc {test_acc:5.4f} |")
-        ori_param = copy.deepcopy(model.state_dict())
 
-        # add noise
-        noise.add_noise_to_weights(
-            model, device, NOISE_MEAN, NOISE_STD)
-
-        # eval with exponential gaussian noise
-        noise_param = copy.deepcopy(model.state_dict())
-        test_loss, test_acc = trainer.validate(
-            model, loss_fn, test_loader, device)
-        logger.info(
-            f"| W/  noise | Loss {test_loss:8.4f} | Acc {test_acc:5.4f} |")
-        logger.info('=' * 84)
-
-        # perturbed model info
-        largest_deviations = []
-        logger.info(
-            f'| {"Layer":<20} '
-            f'| {"Deviation":17} '
-            f'| {"Original":17} '
-            f'| {"Noisy":17} |')
-        logger.info('-' * 84)
-        for key in ori_param.keys():
-            # largest_deviations.append(
-            #     torch.mean((ori_param[key] - noise_param[key]) ** 2).item())
-            largest_deviations.append(
-                torch.max(torch.abs(ori_param[key] - noise_param[key])).item())
-            ori_max = torch.max(ori_param[key]).item()
-            ori_min = torch.min(ori_param[key]).item()
-            noise_max = torch.max(noise_param[key]).item()
-            noise_min = torch.min(noise_param[key]).item()
+    accs, losses = [], []
+    for n in range(EVAL_RUNS):
+        model.load_state_dict(torch.load(MODEL_SAVE))
+        model.eval()
+        logger.info(f'Evaluation Run {n}')
+        with torch.no_grad():
+            # regular eval
+            test_loss, test_acc = trainer.validate(
+                model, loss_fn, test_loader, device)
+            logger.info('=' * 84)
             logger.info(
-                f'| {key:<20} '
-                f'| {largest_deviations[-1]:17.4f} '
-                f'| {ori_max:8.4f} {ori_min:8.4f} '
-                f'| {noise_max:8.4f} {noise_min:8.4f} |')
-        logger.info('=' * 84)
+                f"| Run {n} | W/o noise "
+                f"| Loss {test_loss:8.4f} | Acc {test_acc:5.4f} |")
+            ori_param = copy.deepcopy(model.state_dict())
+
+            # add noise
+            noise.add_noise_to_weights(
+                model, device, NOISE_MEAN, NOISE_STD)
+
+            # eval with exponential gaussian noise
+            noise_param = copy.deepcopy(model.state_dict())
+            test_loss, test_acc = trainer.validate(
+                model, loss_fn, test_loader, device)
+
+            accs.append(test_acc)
+            losses.append(test_loss)
+
+            logger.info(
+                f"| Run {n} | W/  noise "
+                f"| Loss {test_loss:8.4f} | Acc {test_acc:5.4f} |")
+            logger.info('=' * 84)
+
+            # perturbed model info
+            largest_deviations = []
+            logger.info(
+                f'| {"Layer":<20} '
+                f'| {"Deviation":17} '
+                f'| {"Original":17} '
+                f'| {"Noisy":17} |')
+            logger.info('-' * 84)
+            for key in ori_param.keys():
+                largest_deviations.append(
+                    torch.max(
+                        torch.abs(ori_param[key] - noise_param[key])
+                    ).item())
+                ori_max = torch.max(ori_param[key]).item()
+                ori_min = torch.min(ori_param[key]).item()
+                noise_max = torch.max(noise_param[key]).item()
+                noise_min = torch.min(noise_param[key]).item()
+                logger.info(
+                    f'| {key:<20} '
+                    f'| {largest_deviations[-1]:17.2f} '
+                    f'| {ori_max:8.2f} {ori_min:8.2f} '
+                    f'| {noise_max:8.2f} {noise_min:8.2f} |')
+            logger.info('=' * 84)
+
+    logger.info(f'Done {EVAL_RUNS} runs')
+    logger.info(f'Average Accuracy: {np.mean(accs):.4f}')
+    logger.info(f'Average Loss: {np.mean(losses):.4f}')
 
 
 if __name__ == "__main__":

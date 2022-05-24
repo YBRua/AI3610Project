@@ -21,5 +21,7 @@ def parse_args():
         '--epochs', '-e', type=int, default=5)
     parser.add_argument(
         '--nonideality', choices=['none', 'device_faults'], default='none')
+    parser.add_argument(
+        '--eval_runs', type=int, default=5)
 
     return parser.parse_args()
