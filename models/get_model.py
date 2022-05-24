@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 from .mlp import MLP, DropoutMLP, QuantizedMLP
-from .cnn import CNN
+from .cnn import CNN, XzrCNN
 
 
 def build_model(name: str) -> nn.Module:
@@ -13,5 +13,7 @@ def build_model(name: str) -> nn.Module:
         return DropoutMLP()
     elif name == 'qmlp':
         return QuantizedMLP()
+    elif name =='xzr':
+        return XzrCNN()
     else:
         raise ValueError(f'Unknown model name: {name}')
