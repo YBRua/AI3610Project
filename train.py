@@ -26,7 +26,7 @@ def setup_train_logger(args):
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     model_name = os.path.splitext(args.model_save)[0]
     file_handler = logging.FileHandler(
-        filename=f'./logs/{model_name}-train-{args.seed}-{timestamp}.log',
+        filename=f'./logs/train-{model_name}-{args.seed}-{timestamp}.log',
         mode='a',
         encoding='utf-8')
     file_formatter = logging.Formatter(
@@ -77,6 +77,9 @@ def main(args):
     elif args.perturbator == 'df':
         perturbator = perturbators.DeviceFaultPerturbator(
             model, device, NOISE_MEAN, NOISE_STD)
+    elif args.perturbator == 'scheduled':
+        perturbator = perturbators.ScheduledExpGaussianPerturbator(
+            model, device, NOISE_MEAN, std_end=NOISE_STD, steps=N_EPOCHS - 1)
     else:
         perturbator = None
 
@@ -90,14 +93,17 @@ def main(args):
         val_loss, val_acc = trainer.validate(
             model, loss_fn, test_loader, device)
 
+        if perturbator is not None:
+            perturbator.step()
+
         logger.info(
             f'| Epoch {e} '
             f'| Val Loss {val_loss:3.4f} '
             f'| Val Acc {val_acc:.4f} |')
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model.state_dict(), MODEL_SAVE)
-            logger.info(f'| New best model saved as {MODEL_SAVE} |')
+        torch.save(model.state_dict(), MODEL_SAVE)
+        logger.info(f'| Model saved as {MODEL_SAVE} |')
 
 
 if __name__ == "__main__":

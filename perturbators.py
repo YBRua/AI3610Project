@@ -19,6 +19,9 @@ class Perturbator():
     def restore_perturbation(self):
         raise NotImplementedError()
 
+    def step(self):
+        return
+
 
 class DeviceFaultPerturbator(Perturbator):
     def __init__(
@@ -77,6 +80,47 @@ class DeviceFaultPerturbator(Perturbator):
                 param[n_maxed] = param_[n_maxed]
                 param[p_mined] = param_[p_mined]
                 param[n_mined] = param_[n_mined]
+
+
+class ScheduledExpGaussianPerturbator(Perturbator):
+    def __init__(
+            self,
+            model: nn.Module,
+            device: torch.device,
+            mean: float = 0.0,
+            std_start: float = 0.8,
+            std_end: float = 1,
+            steps: int = 3,
+            eps: float = 1e-5) -> None:
+        super().__init__(model, device)
+        self.mean = mean
+        self.eps = eps
+        self.schedule = torch.linspace(std_start, std_end, steps).tolist()
+        self.current_step = 0
+
+    def _exp_gaussian_like(self, x: torch.Tensor, std: float):
+        sampler = Normal(self.mean, std)
+        return torch.exp(sampler.sample(x.shape).to(x.device))
+
+    def perturb_model(self):
+        self.perturb_dict = {}
+        if self.current_step < len(self.schedule):
+            std = self.schedule[self.current_step]
+        else:
+            std = self.schedule[-1]
+        with torch.no_grad():
+            for name, param in self.model.named_parameters():
+                noise = self._exp_gaussian_like(param, std)
+                self.perturb_dict[name] = noise
+                param.mul_(noise + self.eps)
+
+    def restore_perturbation(self):
+        with torch.no_grad():
+            for name, param in self.model.named_parameters():
+                param.mul_(1 / (self.perturb_dict[name] + self.eps))
+
+    def step(self):
+        self.current_step += 1
 
 
 class ExpGaussianPerturbator(Perturbator):

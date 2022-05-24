@@ -24,7 +24,7 @@ def setup_memtorch_logger(args):
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     model_name = os.path.splitext(args.model_save)[0]
     file_handler = logging.FileHandler(
-        filename=f'./logs/{model_name}-memtorch-{args.seed}-{timestamp}.log',
+        filename=f'./logs/memtorch-{model_name}-{args.seed}-{timestamp}.log',
         mode='a',
         encoding='utf-8')
     file_formatter = logging.Formatter(
@@ -67,12 +67,11 @@ def main(args):
     model.eval()
 
     # deploy to memristor
-    if args.use_memtorch:
-        model.load_state_dict(torch.load(MODEL_SAVE))
-        model.eval()
-        mloss, macc = trainer.validate_memtorch(
-            model, loss_fn, test_loader, device)
-        logger.info(f'| Memtorch | Loss {mloss:8.4f} | Acc {macc:5.4f} |')
+    model.load_state_dict(torch.load(MODEL_SAVE))
+    model.eval()
+    mloss, macc = trainer.validate_memtorch(
+        model, loss_fn, test_loader, device)
+    logger.info(f'| Memtorch | Loss {mloss:8.4f} | Acc {macc:5.4f} |')
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 import os
 import sys
-import copy
 import torch
 import logging
 import numpy as np
@@ -26,7 +25,7 @@ def setup_eval_logger(args):
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     model_name = os.path.splitext(args.model_save)[0]
     file_handler = logging.FileHandler(
-        filename=f'./logs/{model_name}-eval-{args.seed}-{timestamp}.log',
+        filename=f'./logs/eval-{model_name}-{args.seed}-{timestamp}.log',
         mode='a',
         encoding='utf-8')
     file_formatter = logging.Formatter(
@@ -82,14 +81,14 @@ def main(args):
             logger.info(
                 f"| Run {n} | W/o noise "
                 f"| Loss {test_loss:8.4f} | Acc {test_acc:5.4f} |")
-            ori_param = copy.deepcopy(model.state_dict())
+            # ori_param = copy.deepcopy(model.state_dict())
 
             # add noise
             noise.add_noise_to_weights(
                 model, device, NOISE_MEAN, NOISE_STD)
 
             # eval with exponential gaussian noise
-            noise_param = copy.deepcopy(model.state_dict())
+            # noise_param = copy.deepcopy(model.state_dict())
             test_loss, test_acc = trainer.validate(
                 model, loss_fn, test_loader, device)
 
