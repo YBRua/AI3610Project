@@ -49,8 +49,8 @@ class DeviceFaultPerturbator(Perturbator):
 
     def step(self):
         if self.scheduled:
-            self.lrs_proportion += 0.0025
-            self.hrs_proportion += 0.0025
+            self.lrs_proportion += 0.025
+            self.hrs_proportion += 0.025
             print(
                 'Increasing device fault prop to '
                 f'{self.lrs_proportion:.4f} | {self.hrs_proportion:.4f}')

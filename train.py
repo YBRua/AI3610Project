@@ -109,6 +109,9 @@ def main(args):
             torch.save(model.state_dict(), MODEL_SAVE)
             logger.info(f'| Model saved as {MODEL_SAVE} |')
 
+        if args.perturbator == 'df':
+            torch.save(model.state_dict(), MODEL_SAVE)
+
 
 if __name__ == "__main__":
     args = parse_args()
