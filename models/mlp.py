@@ -21,6 +21,57 @@ class Quantization(autograd.Function):
             torch.zeros_like(grad_output))
 
 
+class QuantizedMLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(28 * 28, 256)
+        self.act1 = nn.ReLU()
+        self.fc2 = nn.Linear(256, 128)
+        self.act2 = nn.ReLU()
+        self.out = nn.Linear(128, 10)
+
+    def forward(self, x: torch.Tensor):
+        B = x.shape[0]
+        x = x.reshape(B, -1)
+        x = self.fc1(x)
+        x = Quantization.apply(x)
+        x = self.act1(x)
+
+        x = self.fc2(x)
+        x = Quantization.apply(x)
+        x = self.act2(x)
+
+        x = self.out(x)
+        x = Quantization.apply(x)
+        return x
+
+
+class DropoutMLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(28 * 28, 256)
+        self.drop1 = nn.Dropout(0.5)
+        self.act1 = nn.ReLU()
+        self.fc2 = nn.Linear(256, 128)
+        self.drop2 = nn.Dropout(0.5)
+        self.act2 = nn.ReLU()
+        self.out = nn.Linear(128, 10)
+
+    def forward(self, x: torch.Tensor):
+        B = x.shape[0]
+        x = x.reshape(B, -1)
+        x = self.fc1(x)
+        x = self.drop1(x)
+        x = self.act1(x)
+
+        x = self.fc2(x)
+        x = self.drop2(x)
+        x = self.act2(x)
+
+        x = self.out(x)
+        return x
+
+
 class MLP(nn.Module):
     def __init__(self):
         super().__init__()
