@@ -76,12 +76,16 @@ def main(args):
             model, device, NOISE_MEAN, NOISE_STD)
     elif args.perturbator == 'df':
         perturbator = perturbators.DeviceFaultPerturbator(
-            model, device, scheduled=args.scheduled_perturb)
+            model, device,
+            lrs_proportion=0.05 if args.scheduled_perturb else 0.1,
+            hrs_proportion=0.05 if args.scheduled_perturb else 0.1,
+            scheduled=args.scheduled_perturb)
     elif args.perturbator == 'scheduled':
         perturbator = perturbators.ScheduledExpGaussianPerturbator(
             model, device, NOISE_MEAN, std_end=NOISE_STD, steps=N_EPOCHS - 1)
     else:
         perturbator = None
+    logger.info(f'Perturbator {perturbator}')
 
     # train
     best_val_loss = float('inf')
