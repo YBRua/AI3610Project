@@ -51,7 +51,7 @@ class Trainer:
                 perturbator.perturb_model()
 
             optimizer.zero_grad()
-            model_out = torch.softmax(model(x), dim=-1)
+            model_out = torch.log_softmax(model(x), dim=-1)
             proxy_out = torch.softmax(proxy(x), dim=-1)
             pred = model_out.argmax(dim=1)
 
