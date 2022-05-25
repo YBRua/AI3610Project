@@ -49,7 +49,8 @@ def main(args):
     # experiment setup
     BATCH_SIZE = args.batch_size
     MODEL_SAVE = os.path.join('model_save', args.model_save)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
 
     _, test_set = data_prep.load_mnist('./data')
     test_loader = data_prep.wrap_dataloader(
@@ -63,7 +64,7 @@ def main(args):
 
     # evaluation
     logger.info(f'Loading model from {MODEL_SAVE}')
-    model.load_state_dict(torch.load(MODEL_SAVE))
+    model.load_state_dict(torch.load(MODEL_SAVE, map_location=device))
     model.eval()
 
     # deploy to memristor
