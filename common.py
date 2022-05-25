@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument(
         '--regularization', '-r', action='store_true')
     parser.add_argument(
-        '--batch_size', '-b', type=int, default=32)
+        '--batch_size', '-b', type=int, default=64)
     parser.add_argument(
         '--epochs', '-e', type=int, default=5)
     parser.add_argument(
