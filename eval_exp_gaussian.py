@@ -54,6 +54,7 @@ def main(args):
     NOISE_STD = args.std
     MODEL_SAVE = os.path.join('model_save', args.model_save)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cpu')
 
     _, test_set = data_prep.load_mnist('./data')
     test_loader = data_prep.wrap_dataloader(
@@ -70,7 +71,7 @@ def main(args):
 
     accs, losses = [], []
     for n in range(EVAL_RUNS):
-        model.load_state_dict(torch.load(MODEL_SAVE))
+        model.load_state_dict(torch.load(MODEL_SAVE, map_location=device))
         model.eval()
         logger.info(f'Evaluation Run {n}')
         with torch.no_grad():
