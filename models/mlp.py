@@ -99,3 +99,22 @@ class MLP(nn.Module):
         x = self.out(x)
         # x = Quantization.apply(x)
         return x
+
+
+class MultiMLP(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.MLP_1 = MLP()
+        self.MLP_2 = MLP()
+        self.MLP_3 = MLP()
+        self.MLP_4 = MLP()
+
+    def forward(self, x: torch.Tensor):
+        x_1 = self.MLP_1(x)
+        x_2 = self.MLP_2(x)
+        x_3 = self.MLP_3(x)
+        x_4 = self.MLP_4(x)
+
+        result = (x_1+x_2+x_3+x_4) / 4
+        return result

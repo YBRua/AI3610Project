@@ -16,7 +16,7 @@ def parse_args():
         '--proxy_save', type=str, default='model.pt')
     parser.add_argument(
         '--model', '-m',
-        choices=['mlp', 'cnn', 'dmlp', 'qmlp', 'xzr'], default='mlp')
+        choices=['mlp', 'cnn', 'dmlp', 'qmlp', 'xzr', 'mmlp'], default='mlp')
     parser.add_argument(
         '--perturbator', '-p',
         choices=['none', 'exp', 'df', 'sched_exp'], default='none')

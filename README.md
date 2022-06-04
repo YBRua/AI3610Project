@@ -22,10 +22,10 @@ mkdir model_save
 For example, to train an MLP model with batch size 64, and exponential gaussian perturbation (of std 1.0, by default)
 
 ```sh
-python train.py --model mlp --model_save dmlp_egwp_bs64.pt --batch_size 64 -p exp
+python train.py --model mlp --model_save mlp_egwp_bs64.pt --batch_size 64 -p exp
 ```
 
-- `-m` or `--model` specifies the architecture of the model (Can be one of `mlp`, `cnn`, `dmlp` (MLP with dropouts), `qmlp` (MLP with quantization) or `xzr` (another CNN, from another group))
+- `-m` or `--model` specifies the architecture of the model (Can be one of `mlp`, `cnn`, `dmlp` (MLP with dropouts), `qmlp` (MLP with quantization), `mmlp` (Ensembled MLP) or `xzr` (another CNN, from another group))
 - `--model_save` specifies the file to save the model. Models will be saved in `./model_save` directory
 - `-p` or `--perturbator` specifies the perturbator (Can be one of `none`, `exp` (Exponential Gaussian) or `df` (Simulated MemTorch Device Fault))
 - For more commandline arguments, please see the `parse_args` function in `common.py`
