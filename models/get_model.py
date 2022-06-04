@@ -13,7 +13,7 @@ def build_model(name: str) -> nn.Module:
         return DropoutMLP()
     elif name == 'qmlp':
         return QuantizedMLP()
-    elif name =='xzr':
+    elif name == 'xzr':
         return XzrCNN()
     else:
         raise ValueError(f'Unknown model name: {name}')
